@@ -30,22 +30,36 @@ function getargs($argv, $shortopts, $longopts) {
     # ensure these are arrays
     $argv = @($argv)
     $longopts = @($longopts)
+    
+    # if user add duplicate options then key contaminated, get uniq array
+    $longopts = $longopts |Sort-Object -Unique
+    $shortopts = $shortopts | Sort-Object -Unique
 
     for($i = 0; $i -lt $argv.length; $i++) {
         $arg = $argv[$i]
         if($null -eq $arg) { continue }
         # don't try to parse array arguments
-        if($arg -is [array]) { $rem += ,$arg; continue }
-        if($arg -is [int]) { $rem += $arg; continue }
-        if($arg -is [decimal]) { $rem += $arg; continue }
+        if($arg -is [array])    { $rem += ,$arg; continue }
+        if($arg -is [int])      { $rem += [String] $arg; continue }
+        if($arg -is [decimal])  { $rem += [String] $arg; continue }
+        if($arg -is [Double])   { $rem += [String] $arg; continue }
+        # modified not to parse 3.6 as decimal
 
         if($arg.startswith('--')) {
-            $name = $arg.substring(2)
-
+            #$name = $arg.substring(2)
+            $slice_arg = $arg.substring(2)  -Split '=' , 2  #  key=valueww  => $slice_arg[0], $slice_arg[1], key value : $slice_arg[0]
+            
+            $name = $slice_arg[0]
+            #$longopt = $longopts | Where-Object { $_ -match "^$name=?$" }
             $longopt = $longopts | Where-Object { $_ -match "^$name=?$" }
 
+            #Write-Host "name : [$name] , slice_arg : [$($slice_arg.length)] , longopt (  $longopt )"
+            # modified to accept --color=blue with --color blue 
             if($longopt) {
-                if($longopt.endswith('=')) { # requires arg
+                if($slice_arg.length -gt 1) { 
+                    $opts.$name = $slice_arg[1]
+                }
+                elseif($longopt.endswith('=')) { # requires arg
                     if($i -eq $argv.length - 1) {
                         return err "Option --$name requires an argument."
                     }
