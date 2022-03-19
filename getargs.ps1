@@ -18,6 +18,7 @@
 # returns @(opts hash, remaining_args array, error string)
 # ---------------------- modification -------------------------
 # date :  modification
+# 2022-03-19 : shortopts shoud not be sorted
 # 2022-03-02 : add unknown options to rem, int, double type goes to string
 
 function getargs($argv, $shortopts, $longopts) {
@@ -37,7 +38,6 @@ function getargs($argv, $shortopts, $longopts) {
     
     # if user add duplicate options then key contaminated, get uniq array
     $longopts = $longopts |Sort-Object -Unique
-    $shortopts = $shortopts | Sort-Object -Unique
 
     for($i = 0; $i -lt $argv.length; $i++) {
         $arg = $argv[$i]
